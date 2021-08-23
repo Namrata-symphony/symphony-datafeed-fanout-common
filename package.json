@@ -5,7 +5,7 @@
     },
     "name": "fanout-common",
     "description": "Common code between the ecs-fanout and the lambda-fanout",
-    "version": "3.0.5",
+    "version": "3.0.6",
     "author": "Symphony",
     "license": "UNLICENSED",
     "main": "dist/index.js",
@@ -13,12 +13,12 @@
     "homepage": "https://github.com/SymphonyOSF/symphony-datafeed-fanout-common",
     "scripts": {
         "build": "babel src -d dist --source-maps 'inline'",
-        "rebuild": "npm run clean && npm run build",
         "clean": "rm -rf dist",
-        "prepare": "npm run rebuild",
         "lint": "eslint --ext .js src",
-        "test": "nyc mocha --recursive spec/unit",
-        "security-check": "npm audit --registry=https://registry.npmjs.org --production"
+        "prepublish": "npm run rebuild",
+        "rebuild": "npm run clean && npm run build",
+        "security-check": "npm audit --registry=https://registry.npmjs.org --production",
+        "test": "NODE_ENV=development npm run rebuild && nyc mocha --recursive spec/unit"
     },
     "husky": {
         "hooks": {
@@ -27,7 +27,7 @@
     },
     "dependencies": {
         "lodash": "4.17.21",
-        "symphony-datafeed-core": "5.0.5"
+        "symphony-datafeed-core": "5.0.11"
     },
     "devDependencies": {
         "@babel/cli": "7.14.5",
