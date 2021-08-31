@@ -34,9 +34,7 @@ export default class Metrics {
                 truncPayloadType = C_MAESTRO_EVENT_PREFIX;
             }
             this.metrics.payloadType = truncPayloadType;
-        } catch (error) {
-            // do nothing
-        }
+        } catch { }
     }
 
     setInterArrivalTime(lastMessageReceivedTimestamp) {

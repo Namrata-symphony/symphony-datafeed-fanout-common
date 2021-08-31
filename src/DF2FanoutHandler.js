@@ -104,7 +104,7 @@ export default class DF2FanoutHandler {
             return { isVLM: true, latencyToGetPayloadFromS3: finalTsToFetchFromS3 - initTsToFetchFromS3, isReInsertedMessage: false };
 
         } catch (error) {
-            this.logger.error('id[%s] - STEP::Message parsing - Error %o. Message = %o', message.id, error, message);
+            this.logger.error('id[%s] - STEP::Message parsing - Error %s. Message = %o', message.id, coreUtils.inspect(error), message);
             throw new PipelineError({ message: `id[${message.id}] - STEP::Message parsing`, discardOriginalMessage: true });
         }
     }
@@ -230,8 +230,8 @@ export default class DF2FanoutHandler {
                 } else {
                     this.logger.debug('id[%s] Cannot cache VLM: Redis not available', message.id);
                 }
-            } catch (redisError) {
-                this.logger.warn('id[%s] Cannot cache VLM: Redis error: %o', message.id, redisError);
+            } catch (error) {
+                this.logger.warn('id[%s] Cannot cache VLM: Cache error: %s', message.id, coreUtils.inspect(error));
             }
 
             /*
@@ -306,8 +306,9 @@ export default class DF2FanoutHandler {
             }
             return isBroadcast;
         } catch (error) {
-            const msg = `STEP::Broadcast: ${error.message}, podId: ${podId}`;
-            if (/topic does not exist/i.test(error.message)) {
+            const errorMessage = error.message ?? error.causeMessage;
+            const msg = `STEP::Broadcast: ${errorMessage}, podId: ${podId}`;
+            if (/topic does not exist/i.test(errorMessage)) {
                 this.logger.warn(`${msg} - CHECK BROADCAST SUBSCRIPTION FLOW!`);
                 throw new PipelineError({ message: msg, discardOriginalMessage: true });
             } else {
@@ -342,7 +343,7 @@ export default class DF2FanoutHandler {
                 attributes,
                 timestamp: Date.now()
             };
-        } catch (e) {
+        } catch {
             return {
                 data: undefined,
                 id: messageId,
@@ -572,10 +573,8 @@ export default class DF2FanoutHandler {
                     metrics.calculateInternalLatencyForPushBack(d2PushBack - d1PushBack);
                     this.logger.error('id[%s] - Main Pipeline: nack original message. - latency[%d]ms Result: %o - Original error: %s %j. Message = %o', message.id, d2PushBack - d1PushBack, pushBackResult, errorInMainPipeline.message, errorInMainPipeline, message);
                 } catch (pushBackError) {
-
                     metrics.calculateDF2FanoutInternalProcessingTime();
                     metrics.setIsProcessedWithNoErrors(false);
-
                     telemetry.pushMetricsToTelemetry(metrics.getMetrics());
 
                     return Promise.reject(pushBackError);
@@ -600,8 +599,8 @@ export default class DF2FanoutHandler {
         if (this.isMetricsExportationActivated) {
             try {
                 await this.busService.sendTelemetry(telemetry.getTelemetry());
-            } catch (errorExportingTelemetry) {
-                this.logger.error('Error exporting telemetry: %o. Error: %s', telemetry, errorExportingTelemetry.message);
+            } catch (error) {
+                this.logger.error('Error exporting telemetry: %o. Error: %s', telemetry, error.message);
             }
         }
     }
