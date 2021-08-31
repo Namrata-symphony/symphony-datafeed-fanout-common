@@ -1,5 +1,8 @@
 import _ from 'lodash';
-import { feeds as coreFeeds } from 'symphony-datafeed-core';
+import {
+    feeds as coreFeeds,
+    utils as coreUtils
+} from 'symphony-datafeed-core';
 
 const { removeFeeds, markFeedStale } = coreFeeds;
 
@@ -77,7 +80,10 @@ export default class FeedService {
                     });
                     result.numFeedUpdatedToStale++;
                 } catch (error) {
-                    this.logger.warn('Error to update to stale the feed %s of userId %d from pod %d: %o ', feedId, userId, podId, error);
+                    this.logger.warn(
+                        'Error to update to stale the feed %s of userId %d from pod %d: %s',
+                        feedId, userId, podId, coreUtils.inspect(error)
+                    );
                 }
             }
             this.logger.debug('FeedsUpdated to stale = %d', result.numFeedUpdatedToStale);
