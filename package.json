@@ -5,7 +5,7 @@
     },
     "name": "fanout-common",
     "description": "Common code between the ecs-fanout and the lambda-fanout",
-    "version": "3.0.8",
+    "version": "3.0.9",
     "author": "Symphony",
     "license": "UNLICENSED",
     "main": "dist/index.js",
@@ -27,7 +27,7 @@
     },
     "dependencies": {
         "lodash": "4.17.21",
-        "symphony-datafeed-core": "5.0.13"
+        "symphony-datafeed-core": "5.0.14"
     },
     "devDependencies": {
         "@babel/cli": "7.14.5",
