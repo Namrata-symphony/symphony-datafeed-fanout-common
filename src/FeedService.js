@@ -80,7 +80,7 @@ export default class FeedService {
                     });
                     result.numFeedUpdatedToStale++;
                 } catch (error) {
-                    this.logger.warn(
+                    this.logger.error(
                         'Error to update to stale the feed %s of userId %d from pod %d: %s',
                         feedId, userId, podId, coreUtils.inspect(error)
                     );

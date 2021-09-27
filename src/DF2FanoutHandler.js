@@ -104,7 +104,6 @@ export default class DF2FanoutHandler {
             return { isVLM: true, latencyToGetPayloadFromS3: finalTsToFetchFromS3 - initTsToFetchFromS3, isReInsertedMessage: false };
 
         } catch (error) {
-            this.logger.error('id[%s] - STEP::Message parsing - Error %s. Message = %o', message.id, coreUtils.inspect(error), message);
             throw new PipelineError({ message: `id[${message.id}] - STEP::Message parsing`, discardOriginalMessage: true });
         }
     }
@@ -114,13 +113,11 @@ export default class DF2FanoutHandler {
 
         const payloadType = _.get(message, 'data.payload.payloadType');
         if (_.isUndefined(payloadType)) {
-            this.logger.info('id[%s] - STEP::Content validation - missing payloadType. Message = %o', message.id, message);
             throw new PipelineError({ message: `id[${message.id}] -  STEP::Content validation - Missing payloadType`, discardOriginalMessage: true });
         }
 
         const podId = _.get(message, 'data.payload.podId');
         if (_.isUndefined(podId)) {
-            this.logger.info('id[%s] - STEP::Content validation - missing podId. Message = %o', message.id, message);
             throw new PipelineError({ message: `id[${message.id}] -  STEP::Content validation - Missing podId`, discardOriginalMessage: true });
         }
 
@@ -290,7 +287,6 @@ export default class DF2FanoutHandler {
 
         } catch (error) {
             const msg = `STEP::Split: ${error.message}, podId: ${podId}`;
-            this.logger.warn(msg);
             throw new PipelineError({ message: msg, discardOriginalMessage: false });
         }
     }
@@ -309,10 +305,8 @@ export default class DF2FanoutHandler {
             const errorMessage = error.message ?? error.causeMessage;
             const msg = `STEP::Broadcast: ${errorMessage}, podId: ${podId}`;
             if (/topic does not exist/i.test(errorMessage)) {
-                this.logger.warn(`${msg} - CHECK BROADCAST SUBSCRIPTION FLOW!`);
-                throw new PipelineError({ message: msg, discardOriginalMessage: true });
+                throw new PipelineError({ message: `${msg} - CHECK BROADCAST SUBSCRIPTION FLOW`, discardOriginalMessage: true });
             } else {
-                this.logger.warn(msg);
                 throw new PipelineError({ message: msg, discardOriginalMessage: false });
             }
         }
@@ -529,8 +523,7 @@ export default class DF2FanoutHandler {
                                     if (isNonExistentQueueReason) {
                                         this.logger.debug('id[%s] - STEP::Fanout: nonexistent queue, but fanout proceeds normally, podId: %d', message.id, podId);
                                     } else {
-                                        this.logger.error('id[%s] - STEP::Fanout: Fail on fanout message: %s, podId: %d. Message = %o', message.id, rejectReason, podId, message);
-                                        throw new PipelineError({ message: 'Fanout not processed for all feeds', discardOriginalMessage: false });
+                                        throw new PipelineError({ message: `Fanout not processed for all feeds , failed on ${message} , reason:  ${rejectReason} , podId: ${podId}`, discardOriginalMessage: false });
                                     }
                                 }
                             });
@@ -544,8 +537,7 @@ export default class DF2FanoutHandler {
                             const hasFeedsToRecycle = !_.isEmpty(toDelete) || !_.isEmpty(toStale) || !_.isEmpty(toReuse);
                             if (hasFeedsToRecycle) {
                                 const df1Recycling = Date.now();
-                                this.logger.debug('id[%s] - STEP:: recycling feeds INIT', message.id);
-                                this.logger.debug('id[%s] - STEP:: recycling feeds - feedsToRemove [ %o ], feedsToStale [ %o ], feedsToReuse [ %o ]', message.id, toDelete, toStale, toReuse);
+                                this.logger.debug('id[%s] - STEP:: INIT - DONE  recycling feeds - feedsToRemove [ %o ], feedsToStale [ %o ], feedsToReuse [ %o ]', message.id, toDelete, toStale, toReuse);
                                 await this.feedService.recyclingFeeds(toStale, toReuse, toDelete, podId);
                                 const df2Recycling = Date.now();
                                 metrics.calculateInternalLatencyForFeedsRecycling(df2Recycling - df1Recycling);
@@ -613,7 +605,7 @@ export default class DF2FanoutHandler {
         // adding the batchSize to the telemetry headers metrics
         telemetry.setBatchSize(batchSize);
 
-        this.logger.debug('Received batch size: %d', batchSize);
+        this.logger.info('Received batch size: %d', batchSize);
         for (let i = 0; i < records.length; i++) {
             promises.push(this.processRecord(records[ i ], telemetry));
         }
